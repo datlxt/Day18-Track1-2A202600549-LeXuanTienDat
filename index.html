@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashLearn AI — Human-Centered AI Design Prototype</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --secondary: #10B981;
+            --secondary-hover: #059669;
+            --bg-color: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --success: #10B981;
+            --low-confidence: #FEF3C7;
+            --fact: #2563EB;
+            --fact-bg: #DBEAFE;
+            --infer: #B45309;
+            --infer-bg: #FEF3C7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            display: flex;
+        }
+
+        /* Sidebar nav (file structure 00-07) */
+        .sidebar {
+            width: 250px;
+            min-width: 250px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            background: #1E1B4B;
+            color: #E0E7FF;
+            padding: 1.25rem 1rem;
+            overflow-y: auto;
+        }
+
+        .sidebar h1 {
+            font-size: 1.15rem;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar .sub {
+            font-size: 0.75rem;
+            color: #A5B4FC;
+            margin-bottom: 1.25rem;
+        }
+
+        .nav-item {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            border: none;
+            color: #C7D2FE;
+            padding: 0.6rem 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-bottom: 0.15rem;
+        }
+
+        .nav-item:hover {
+            background: #312E81;
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .nav-tag {
+            font-size: 0.7rem;
+            color: #818CF8;
+            display: block;
+        }
+
+        .main {
+            flex: 1;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.7rem 1.4rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-primary:disabled {
+            background: #C7D2FE;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #F3F4F6;
+        }
+
+        .btn-danger {
+            background: #fff;
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .btn-danger:hover {
+            background: #FEF2F2;
+        }
+
+        .btn-success {
+            background: var(--secondary);
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: var(--secondary-hover);
+        }
+
+        .btn-sm {
+            padding: 0.3rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, .07);
+            margin-bottom: 1.25rem;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            resize: vertical;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, .2);
+        }
+
+        select {
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            margin-right: 1rem;
+        }
+
+        .chip {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #E0E7FF;
+            color: var(--primary);
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin: 0 0.5rem 0.5rem 0;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .chip:hover {
+            background: #C7D2FE;
+        }
+
+        .chip.selected {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 4rem 0;
+        }
+
+        .spinner {
+            border: 4px solid #F3F4F6;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem auto;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .step-indicator {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-top: 1rem;
+        }
+
+        .draft-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .draft-card {
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s;
+        }
+
+        .draft-card.removed {
+            opacity: 0.55;
+            border-left-color: var(--error);
+            background: #F9FAFB;
+        }
+
+        .draft-card.kept {
+            border-left-color: var(--success);
+        }
+
+        .draft-card.low-confidence {
+            border-left-color: var(--warning);
+            background: var(--low-confidence);
+        }
+
+        .confidence-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .confidence-high {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .confidence-medium {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .confidence-low {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .type-badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 9999px;
+        }
+
+        .type-fact {
+            background: var(--fact-bg);
+            color: var(--fact);
+        }
+
+        .type-infer {
+            background: var(--infer-bg);
+            color: var(--infer);
+        }
+
+        .draft-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: .5px;
+            background: #FEF9C3;
+            color: #854D0E;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #FDE047;
+        }
+
+        .source-snippet {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: #F3F4F6;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            border-left: 2px solid var(--border);
+            font-style: italic;
+        }
+
+        .card-actions {
+            margin-top: 1.25rem;
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .comparison-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: #F8FAFC;
+            padding: 1.25rem;
+            border-radius: 1rem;
+            border: 1px dashed #CBD5E1;
+        }
+
+        .comparison-box {
+            background: #fff;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .study-card-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 280px;
+            margin: 1.5rem 0;
+        }
+
+        .study-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .study-card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .study-card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .1);
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .study-card-back {
+            transform: rotateY(180deg);
+            background: #F8FAFC;
+        }
+
+        .study-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .study-actions.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, .15);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-error {
+            background: #FEF2F2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
+        }
+
+        .alert-warning {
+            background: #FFFBEB;
+            color: #92400E;
+            border: 1px solid #FDE68A;
+        }
+
+        .alert-success {
+            background: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+
+        .alert-info {
+            background: #EEF2FF;
+            color: #3730A3;
+            border: 1px solid #C7D2FE;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: #fff;
+            border-radius: 1rem;
+            border: 2px dashed var(--border);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--border);
+            margin-bottom: 1rem;
+        }
+
+        /* Rationale card placed beside a flow */
+        .rationale {
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            border-left: 4px solid var(--warning);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-size: 0.85rem;
+            color: #78350F;
+            margin-bottom: 1.25rem;
+        }
+
+        .rationale strong {
+            color: #92400E;
+        }
+
+        .rationale ul {
+            margin: 0.5rem 0 0 1.1rem;
+        }
+
+        .rationale li {
+            margin-bottom: 0.3rem;
+        }
+
+        /* Agency pills */
+        .agency-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .agency-pill {
+            flex: 1;
+            min-width: 180px;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .agency-act {
+            background: #ECFDF5;
+            border-color: #A7F3D0;
+        }
+
+        .agency-ask {
+            background: #FFFBEB;
+            border-color: #FDE68A;
+        }
+
+        .agency-dont {
+            background: #FEF2F2;
+            border-color: #FECACA;
+        }
+
+        .agency-pill h4 {
+            font-size: 0.95rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .agency-pill p {
+            font-size: 0.8rem;
+            margin-bottom: 0.6rem;
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            background: #111827;
+            color: #fff;
+            padding: 0.85rem 1.25rem;
+            border-radius: 0.6rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            z-index: 2000;
+            transition: transform 0.35s;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .3);
+            max-width: 90vw;
+        }
+
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #toast button {
+            background: transparent;
+            color: #FCD34D;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* Flow map */
+        .flow-row {
+            display: flex;
+            align-items: stretch;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .flow-box {
+            flex: 1;
+            min-width: 130px;
+            background: #EEF2FF;
+            border: 1px solid #C7D2FE;
+            color: #3730A3;
+            border-radius: 0.6rem;
+            padding: 0.9rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .flow-arrow {
+            align-self: center;
+            color: #818CF8;
+            font-size: 1.5rem;
+        }
+
+        /* Matrix */
+        .matrix {
+            display: grid;
+            grid-template-columns: 120px 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 0.6rem;
+            overflow: hidden;
+        }
+
+        .matrix>div {
+            background: #fff;
+            padding: 0.9rem;
+            font-size: 0.83rem;
+        }
+
+        .matrix .mh {
+            background: #1E1B4B;
+            color: #fff;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .matrix .mside {
+            background: #EEF2FF;
+            color: #3730A3;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .matrix code {
+            background: #F3F4F6;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 0.78rem;
+        }
+
+        /* recovery steps */
+        .rec-step {
+            border-left: 3px solid var(--border);
+            padding: 0 0 1.25rem 1.25rem;
+            position: relative;
+        }
+
+        .rec-step::before {
+            content: '';
+            position: absolute;
+            left: -9px;
+            top: 2px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid var(--border);
+        }
+
+        .rec-step.done::before {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .rec-step.current::before {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .rec-step.locked {
+            opacity: 0.4;
+        }
+
+        .rec-step h4 {
+            font-size: 0.95rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mt-2 {
+            margin-top: 0.5rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .wrap {
+            flex-wrap: wrap;
+        }
+
+        .muted {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 760px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+            }
+
+            .comparison-panel,
+            .matrix {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ===== SIDEBAR: file structure 00-07 ===== -->
+    <nav class="sidebar">
+        <h1>FlashLearn AI</h1>
+        <div class="sub">Day 18 · Human-Centered AI Design<br>Track 1 · Lát cắt: Bài học → Flashcard</div>
+        <button class="nav-item" data-target="screen-flowmap"><span class="nav-tag">00</span>Flow map &amp; phạm
+            vi</button>
+        <button class="nav-item active" data-target="screen-onboarding"><span
+                class="nav-tag">01</span>Onboarding</button>
+        <button class="nav-item" data-target="screen-input"><span class="nav-tag">02</span>Luồng chính / During</button>
+        <button class="nav-item" data-target="screen-results"><span class="nav-tag">03</span>Review &amp;
+            Agency</button>
+        <button class="nav-item" data-target="screen-recovery"><span class="nav-tag">04</span>Failure &amp;
+            Recovery</button>
+        <button class="nav-item" data-target="screen-matrix"><span class="nav-tag">05</span>Feedback 2×2</button>
+        <button class="nav-item" data-target="screen-rationale"><span class="nav-tag">06</span>Design rationale</button>
+        <button class="nav-item" data-target="screen-demo"><span class="nav-tag">07</span>Demo path (5')</button>
+    </nav>
+
+    <div class="main">
+        <div class="container">
+
+            <!-- ===== 00 — FLOW MAP & SCOPE ===== -->
+            <div id="screen-flowmap" class="screen">
+                <h2>00 — Flow map &amp; phạm vi tính năng</h2>
+                <p>Lát cắt: <strong>"AI đọc nội dung bài học → tạo bộ flashcard nháp → người dùng kiểm tra, sửa, từ chối
+                        → học."</strong> Đây là MỘT lát cắt, không phải toàn bộ app học tập.</p>
+
+                <div class="card">
+                    <h3>Vòng đời trải nghiệm</h3>
+                    <div class="flow-row">
+                        <div class="flow-box">Onboarding<br><span class="muted">Kỳ vọng &amp; quyền</span></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box">During<br><span class="muted">AI tạo thẻ</span></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box">After<br><span class="muted">Review + Agency</span></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box">Feedback &amp; Recovery<br><span class="muted">Sửa lỗi, học tiếp</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Danh sách kịch bản (1 onboarding + 4)</h3>
+                    <ul style="margin-left:1.1rem; color:var(--text-muted)">
+                        <li><strong>F0 · Onboarding</strong> — lần đầu dùng tính năng. <span class="muted">(01)</span>
+                        </li>
+                        <li><strong>F1 · During</strong> — đầu vào mơ hồ/quá dài → AI <em>hỏi tập trung chương nào</em>.
+                            <span class="muted">(02)</span>
+                        </li>
+                        <li><strong>F2 · During + Explainability</strong> — AI tạo thẻ + lớp bằng chứng "Nguồn" + tách
+                            dữ kiện/suy luận. <span class="muted">(03)</span></li>
+                        <li><strong>F3 · Agency</strong> — Act / Ask / Don't Act khi lưu &amp; nhắc. <span
+                                class="muted">(03)</span></li>
+                        <li><strong>F4 · Failure &amp; Recovery</strong> — AI tự tin nhưng SAI → phát hiện qua nguồn →
+                            sửa → học tiếp. <span class="muted">(04)</span></li>
+                        <li><strong>F5 · Uncertainty</strong> — thẻ độ tin cậy thấp → mặc định chưa chọn → tạo lại.
+                            <span class="muted">(03)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="comparison-panel">
+                    <div><strong>✅ Trong phạm vi</strong>
+                        <div class="comparison-box mt-2">Tạo, kiểm tra, sửa, từ chối flashcard từ 1 đoạn bài học; lưu
+                            vào bộ thẻ; ôn tập một phiên ngắn.</div>
+                    </div>
+                    <div><strong>🚫 Ngoài phạm vi</strong>
+                        <div class="comparison-box mt-2">Quản lý toàn bộ lịch học; chấm điểm thay người dùng; tự đặt mục
+                            tiêu; đồng bộ mọi môn học.</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="nav('screen-onboarding')">Tới Onboarding →</button>
+            </div>
+
+            <!-- ===== 01 — ONBOARDING ===== -->
+            <div id="screen-onboarding" class="screen active">
+                <div class="text-center" style="margin-top:1rem;">
+                    <div style="font-size:3.5rem;">🧠⚡</div>
+                    <h1>Chào mừng tới FlashLearn AI</h1>
+                    <p style="font-size:1.1rem; max-width:560px; margin:0 auto 1.5rem auto;">Trước khi bắt đầu, đây là
+                        những điều bạn nên biết để dùng AI đúng cách.</p>
+                </div>
+
+                <div class="comparison-panel">
+                    <div>
+                        <strong>✅ AI có thể giúp gì</strong>
+                        <div class="comparison-box mt-2">
+                            • Đọc đoạn bài học bạn dán vào<br>
+                            • Tạo <strong>bản nháp</strong> flashcard hỏi–đáp<br>
+                            • Gắn độ tin cậy &amp; trích nguồn cho từng thẻ
+                        </div>
+                    </div>
+                    <div>
+                        <strong>🚫 AI sẽ KHÔNG tự làm</strong>
+                        <div class="comparison-box mt-2">
+                            • Không tự xóa thẻ bạn đã sửa<br>
+                            • Không tự đánh dấu "đã thuộc" thay bạn<br>
+                            • Không tự chia sẻ bộ thẻ của bạn
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📥 Dữ liệu &amp; quyền cần thiết</h3>
+                    <p style="margin-bottom:0.5rem;">AI chỉ dùng <strong>đoạn văn bản bạn dán vào</strong> trong phiên
+                        này. Không kết nối email/lịch, không lưu nội dung sau khi bạn đóng trang.</p>
+                    <span class="type-badge type-fact">🔒 Quyền tối thiểu</span>
+                    <span class="type-badge type-infer" style="margin-left:0.5rem;">Bạn có thể rút lại bất cứ lúc nào
+                        (xóa nội dung đã dán)</span>
+                </div>
+
+                <div class="rationale">
+                    <strong>Rationale (Onboarding):</strong> Đặt kỳ vọng đúng ngay từ đầu — nêu rõ AI <em>chỉ tạo bản
+                        nháp</em> và ranh giới việc nó không tự làm, để người dùng không tin tưởng quá mức (over-trust).
+                    Không hỏi mọi thông tin ngay; chỉ cần 1 đoạn bài học để bắt đầu.
+                </div>
+
+                <div class="text-center">
+                    <button class="btn btn-primary" onclick="nav('screen-input')">Bắt đầu — chỉ cần 1 đoạn bài
+                        học</button>
+                    <div class="mt-2"><button class="btn btn-secondary btn-sm" onclick="loadMockLesson()">Hoặc dùng bài
+                            học mẫu</button></div>
+                </div>
+            </div>
+
+            <!-- ===== 02 — INPUT (During entry) ===== -->
+            <div id="screen-input" class="screen">
+                <button class="btn btn-secondary btn-sm mb-4" onclick="nav('screen-onboarding')">← Quay lại</button>
+                <h2>02 — Nhập nội dung bài học <span class="muted">· During</span></h2>
+                <p>Dán ghi chú, slide hoặc tài liệu bạn muốn chuyển thành flashcard.</p>
+
+                <div id="input-error" class="alert alert-error hidden">Vui lòng nhập nội dung bài học hoặc chọn bài học
+                    mẫu.</div>
+                <div id="input-warning" class="alert alert-warning hidden">Nội dung hơi ngắn, AI có thể tạo flashcard
+                    chưa đủ chính xác.</div>
+
+                <textarea id="lesson-text" placeholder="Ví dụ: Trust calibration là việc hiệu chỉnh niềm tin..."></textarea>
+                <div style="text-align:right;" class="muted mb-4"><span id="char-count">0</span> ký tự</div>
+
+                <div class="mb-4">
+                    <p style="font-weight:500; color:var(--text-main); margin-bottom:0.5rem;">Hoặc thử các chủ đề mẫu:
+                    </p>
+                    <div id="mock-chips">
+                        <span class="chip" onclick="selectMock('trust')">Trust Calibration (gọn)</span>
+                        <span class="chip" onclick="selectMock('long')">Bài dài · cả chương (AI hỏi tập trung)</span>
+                        <span class="chip" onclick="selectMock('agency')">Agency Design (có thẻ độ tin cậy
+                            thấp)</span>
+                    </div>
+                </div>
+
+                <div class="card flex justify-between items-center wrap gap-2">
+                    <div>
+                        <label style="font-weight:500;">Độ khó:</label>
+                        <select id="difficulty">
+                            <option value="basic">Cơ bản</option>
+                            <option value="medium" selected>Trung bình</option>
+                            <option value="advanced">Nâng cao</option>
+                        </select>
+                        <label style="font-weight:500;">Số lượng:</label>
+                        <select id="card-count">
+                            <option value="5">Khoảng 5</option>
+                            <option value="10" selected>Khoảng 10</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateFlashcards()">Tạo flashcard bằng AI ✨</button>
+                </div>
+
+                <div class="rationale">
+                    <strong>Rationale (During · F1):</strong> Nếu đầu vào quá dài/mơ hồ, AI <em>không đoán bừa</em> mà
+                    <code>Ask</code> — hỏi tập trung phần nào (xem chip "bài dài"). Chi phí hỏi 1 câu thấp hơn nhiều so
+                    với tạo cả bộ thẻ lệch trọng tâm.
+                </div>
+            </div>
+
+            <!-- ===== F1 — CLARIFY (ambiguous/long input) ===== -->
+            <div id="screen-clarify" class="screen">
+                <h2>AI cần làm rõ trước khi tạo thẻ</h2>
+                <div class="alert alert-info">
+                    Nội dung khá dài (cả chương). Nếu mình tạo thẻ cho toàn bộ, kết quả có thể dàn trải. <strong>Bạn
+                        muốn tập trung vào phần nào?</strong>
+                </div>
+                <div class="card">
+                    <p style="color:var(--text-main); font-weight:500;">Chọn trọng tâm:</p>
+                    <div>
+                        <span class="chip" onclick="clarifyPick('Trust calibration')">Trust calibration</span>
+                        <span class="chip" onclick="clarifyPick('Agency: Act / Ask / Don\'t Act')">Agency: Act / Ask /
+                            Don't Act</span>
+                        <span class="chip" onclick="clarifyPick('Feedback & xử lý lỗi')">Feedback &amp; xử lý lỗi</span>
+                        <span class="chip" onclick="clarifyPick('Tất cả (tạo nhiều thẻ hơn)')">Tất cả</span>
+                    </div>
+                    <p class="muted mt-4">Bạn vẫn có thể chỉnh sau. Đây chỉ là gợi ý ban đầu — AI không tự quyết thay
+                        bạn.</p>
+                </div>
+                <div class="rationale">
+                    <strong>Rationale (F1 · Ask):</strong> AI biết "đây là bài về DI" nhưng <em>chưa biết</em> bạn cần
+                    ôn phần nào → đây là giả định quan trọng. Hỏi 1 câu duy nhất (không phải biểu mẫu dài) giúp bám đúng
+                    nhu cầu mà không gây mệt.
+                </div>
+            </div>
+
+            <!-- ===== LOADING ===== -->
+            <div id="screen-loading" class="screen">
+                <div class="loading-container">
+                    <div class="spinner"></div>
+                    <h2>AI đang phân tích bài học...</h2>
+                    <div id="loading-step" class="step-indicator">Đang đọc nội dung bài học...</div>
+                </div>
+            </div>
+
+            <!-- ===== 03 — RESULTS / REVIEW / AGENCY ===== -->
+            <div id="screen-results" class="screen">
+                <div class="flex justify-between items-center wrap mb-4">
+                    <h2 style="margin-bottom:0">03 — Kiểm tra Flashcard <span class="draft-badge">BẢN NHÁP</span></h2>
+                    <div class="muted">
+                        <span id="stats-total">0</span> tạo •
+                        <span id="stats-kept" style="color:var(--success); font-weight:600;">0</span> giữ •
+                        <span id="stats-pending" style="color:var(--warning); font-weight:600;">0</span> cần kiểm tra •
+                        <span id="stats-removed" style="color:var(--error); font-weight:600;">0</span> loại bỏ
+                    </div>
+                </div>
+
+                <div class="alert alert-info">Đây mới là <strong>bản nháp do AI đề xuất</strong> — chưa có gì được lưu.
+                    Bạn duyệt xong thì mới chuyển sang ôn tập.</div>
+
+                <div id="low-confidence-banner"
+                    class="alert alert-warning hidden flex justify-between items-center wrap gap-2">
+                    <div><strong>Cảnh báo (F5):</strong> Một số flashcard có độ tin cậy thấp vì nguồn chưa đủ chi tiết —
+                        đã được xếp xuống cuối &amp; chưa chọn sẵn.</div>
+                    <button class="btn btn-sm btn-secondary" onclick="regenerateCards()">Tạo lại với gợi ý rõ
+                        hơn</button>
+                </div>
+
+                <!-- AGENCY PANEL: Act / Ask / Don't Act -->
+                <div class="card">
+                    <h3>⚙️ Mức độ tự chủ của AI ở bước này</h3>
+                    <div class="agency-row">
+                        <div class="agency-pill agency-act">
+                            <h4>🟢 Act — tự làm</h4>
+                            <p>Gộp thẻ trùng &amp; gắn tag chủ đề. Rủi ro thấp, thấy ngay, hoàn tác 1 chạm.</p>
+                            <button class="btn btn-sm btn-success" onclick="demoAct()">Xem AI vừa tự làm gì</button>
+                        </div>
+                        <div class="agency-pill agency-ask">
+                            <h4>🟡 Ask — hỏi trước</h4>
+                            <p>Trước khi lưu vào bộ "Ôn cuối kỳ" &amp; bật nhắc ôn, AI xin xác nhận.</p>
+                            <button class="btn btn-sm btn-secondary" onclick="askSaveDeck()">Lưu vào bộ thẻ…</button>
+                        </div>
+                        <div class="agency-pill agency-dont">
+                            <h4>🔴 Don't Act — không làm</h4>
+                            <p>AI không tự xóa thẻ đã sửa / đánh dấu đã thuộc / chia sẻ.</p>
+                            <button class="btn btn-sm btn-danger" onclick="demoDontAct()">Thử yêu cầu AI tự xóa</button>
+                        </div>
+                    </div>
+                    <div class="muted">Bạn theo dõi &amp; can thiệp ngay tại danh sách bên dưới: giữ / loại / sửa / hoàn
+                        tác từng thẻ.</div>
+                </div>
+
+                <div class="comparison-panel">
+                    <div><strong>Nội dung gốc:</strong>
+                        <div class="comparison-box mt-2" id="compare-before"></div>
+                    </div>
+                    <div><strong>AI chuyển thành Flashcard:</strong>
+                        <div class="comparison-box mt-2" id="compare-after"></div>
+                    </div>
+                </div>
+
+                <div id="draft-container" class="draft-list"></div>
+
+                <div class="rationale">
+                    <strong>Rationale (After · F2):</strong> Mỗi thẻ tách rõ <span class="type-badge type-fact">🟦 Dữ
+                        kiện từ bài</span> và <span class="type-badge type-infer">🟨 AI diễn giải</span>, kèm nút
+                    <em>Nguồn</em> để kiểm chứng. Nhờ vậy lỗi của AI <em>dễ phát hiện và dễ hoàn tác</em> → cho phép Act
+                    ở các thao tác nhỏ.
+                </div>
+
+                <div class="card text-center" style="background:#F8FAFC;">
+                    <h3>Bạn đã kiểm tra xong chưa?</h3>
+                    <p>Hãy đảm bảo nội dung chính xác trước khi bắt đầu ôn tập.</p>
+                    <div class="flex justify-center gap-2 wrap mt-4">
+                        <button class="btn btn-secondary" onclick="scrollToDrafts()">Quay lại chỉnh sửa</button>
+                        <button class="btn btn-primary" onclick="askSaveDeck()" id="btn-start-study" disabled>Xác nhận
+                            &amp; Bắt đầu ôn tập</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== STUDY ===== -->
+            <div id="screen-study" class="screen">
+                <div class="flex justify-between items-center">
+                    <button class="btn btn-secondary btn-sm" onclick="nav('screen-results')">← Quay lại danh
+                        sách</button>
+                    <div style="font-weight:600;" id="study-progress">Thẻ 1/5</div>
+                </div>
+                <div class="study-card-container">
+                    <div class="study-card" id="flashcard-element" onclick="flipCard()">
+                        <div class="study-card-face">
+                            <div
+                                style="font-size:0.85rem; color:var(--primary); font-weight:600; margin-bottom:1rem; text-transform:uppercase;">
+                                Câu hỏi</div>
+                            <h2 id="study-q">...</h2>
+                            <p class="muted" style="margin-top:2rem;">(Click để lật thẻ)</p>
+                        </div>
+                        <div class="study-card-face study-card-back">
+                            <div
+                                style="font-size:0.85rem; color:var(--secondary); font-weight:600; margin-bottom:1rem; text-transform:uppercase;">
+                                Đáp án</div>
+                            <h2 id="study-a">...</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="study-actions" id="study-actions">
+                    <button class="btn btn-danger" onclick="nextCard('hard')">Chưa hiểu</button>
+                    <button class="btn btn-secondary" onclick="nextCard('medium')"
+                        style="border-color:var(--warning); color:#B45309;">Cần ôn lại</button>
+                    <button class="btn btn-success" onclick="nextCard('easy')">Dễ</button>
+                </div>
+                <p class="muted text-center mt-4">💡 Thẻ "Chưa hiểu" sẽ được ưu tiên xuất hiện lại sớm hơn (implicit
+                    user feedback).</p>
+                <div class="rationale">
+                    <strong>Rationale (Implicit feedback):</strong> Thời gian dừng trên thẻ &amp; nút độ khó là tín hiệu
+                    ngầm về mức nắm bài. Hành vi ≠ sự thật chuẩn: "bỏ qua nhanh" có thể là đã thuộc <em>hoặc</em> chán —
+                    nên chỉ dùng để xếp lịch ôn, không tự ý xóa thẻ.
+                </div>
+            </div>
+
+            <!-- ===== 04 — FAILURE & RECOVERY (complete loop) ===== -->
+            <div id="screen-recovery" class="screen">
+                <h2>04 — Failure &amp; Recovery <span class="muted">· F4: AI tự tin nhưng SAI</span></h2>
+                <p>Kịch bản: AI tạo một thẻ nghe rất chắc chắn (độ tin cậy "Cao") nhưng nội dung <strong>mâu thuẫn với
+                        bài học</strong> (hiểu sai khái niệm Trust calibration). Đây là vòng khôi phục hoàn chỉnh — không
+                    dừng ở "báo lỗi".</p>
+
+                <!-- Step 1 -->
+                <div class="rec-step current" id="rec-1">
+                    <h4>1 · AI đưa ra thẻ sai một cách tự tin</h4>
+                    <div class="card draft-card" style="border-left-color:var(--error);">
+                        <span class="confidence-badge confidence-high">Tin cậy: Cao</span>
+                        <div class="mb-4"><span class="type-badge type-infer">🟨 AI diễn giải</span> <span
+                                style="font-size:0.75rem; background:#E5E7EB; padding:2px 6px; border-radius:4px;">#Khái
+                                niệm</span></div>
+                        <div><strong style="color:var(--primary);">Hỏi:</strong> Trust calibration hướng tới điều gì?
+                        </div>
+                        <div class="mt-2"><strong style="color:var(--secondary);">Đáp:</strong> Làm cho người dùng
+                            <strong>tin tưởng AI càng nhiều càng tốt (trust tối đa)</strong>.</div>
+                        <div id="rec-source" class="source-snippet hidden"><strong>Đối chiếu nguồn:</strong> ⚠️ Mâu
+                            thuẫn với bài học! Bài học nói: <em>"Trust tốt không phải trust cao, mà là trust đúng mức
+                                [2]"</em> — mục tiêu là <strong>calibrated trust</strong>, tránh Overtrust, không phải
+                            tin tối đa.</div>
+                        <div class="card-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="recRevealSource()">🔍 Đối chiếu
+                                nguồn</button>
+                            <button class="btn btn-sm btn-danger hidden" id="rec-report" onclick="recReport()">Báo
+                                sai</button>
+                        </div>
+                    </div>
+                    <div class="rationale">
+                        <strong>Rationale:</strong> Hậu quả nếu tin theo: học sai kiến thức. Lỗi này khó tự phát hiện vì
+                        giọng văn tự tin → bắt buộc có <em>lớp bằng chứng</em> để người dùng kiểm tra. AI nên
+                        <code>Ask</code>/hiển thị giới hạn, không <code>Act</code>.
+                    </div>
+                </div>
+
+                <!-- Step 2: report type -->
+                <div class="rec-step locked" id="rec-2">
+                    <h4>2 · Người dùng nêu rõ LOẠI lỗi (không chỉ "không thích")</h4>
+                    <div id="rec-report-form" class="card hidden">
+                        <p style="color:var(--text-main);">Thẻ này sai ở đâu?</p>
+                        <label class="flex gap-2 items-center"
+                            style="padding:0.5rem; border:1px solid var(--border); border-radius:0.5rem; cursor:pointer;"><input
+                                type="radio" name="rec_reason" value="notinsource"> Không có trong bài học (AI
+                            bịa)</label>
+                        <label class="flex gap-2 items-center mt-2"
+                            style="padding:0.5rem; border:1px solid var(--border); border-radius:0.5rem; cursor:pointer;"><input
+                                type="radio" name="rec_reason" value="factual"> Sai sự thật</label>
+                        <label class="flex gap-2 items-center mt-2"
+                            style="padding:0.5rem; border:1px solid var(--border); border-radius:0.5rem; cursor:pointer;"><input
+                                type="radio" name="rec_reason" value="offtopic"> Lạc đề</label>
+                        <button class="btn btn-primary mt-4" onclick="recSubmitReason()">Gửi</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: system confirms understanding -->
+                <div class="rec-step locked" id="rec-3">
+                    <h4>3 · Hệ thống xác nhận đã hiểu vấn đề</h4>
+                    <div id="rec-understand" class="alert alert-success hidden">✅ Mình hiểu rồi: <strong
+                            id="rec-understand-text">thẻ này nêu thông tin không có trong bài học</strong>. Mình sẽ
+                        không dùng nội dung tự suy luận cho thẻ này nữa.</div>
+                </div>
+
+                <!-- Step 4: system proposes recovery -->
+                <div class="rec-step locked" id="rec-4">
+                    <h4>4 · Hệ thống đề xuất cách khôi phục</h4>
+                    <div id="rec-options" class="card hidden">
+                        <p style="color:var(--text-main);">Bạn muốn xử lý thế nào?</p>
+                        <div class="flex gap-2 wrap">
+                            <button class="btn btn-success btn-sm" onclick="recFix('regen')">Tạo lại — chỉ bám câu có
+                                thật trong bài</button>
+                            <button class="btn btn-secondary btn-sm" onclick="recFix('edit')">Tự sửa tay</button>
+                            <button class="btn btn-danger btn-sm" onclick="recFix('delete')">Xóa thẻ này</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: fixed result -->
+                <div class="rec-step locked" id="rec-5">
+                    <h4>5 · Kết quả đã sửa &amp; người dùng tiếp tục</h4>
+                    <div id="rec-fixed" class="hidden">
+                        <div class="card draft-card kept">
+                            <span class="confidence-badge confidence-high">Tin cậy: Cao</span>
+                            <div class="mb-4"><span class="type-badge type-fact">🟦 Dữ kiện từ bài</span></div>
+                            <div><strong style="color:var(--primary);">Hỏi:</strong> Trust calibration hướng tới điều gì?
+                            </div>
+                            <div class="mt-2"><strong style="color:var(--secondary);">Đáp:</strong> Niềm tin <strong>đúng
+                                    mức (calibrated)</strong> — khớp với năng lực thật của AI, tránh Overtrust lẫn
+                                Distrust [1, 2].
+                            </div>
+                            <div class="source-snippet"><strong>Trích xuất từ:</strong> "Trust tốt không phải trust cao,
+                                mà là trust đúng mức [2]."</div>
+                        </div>
+                        <div class="alert alert-info">📝 <strong>Điều được sửa &amp; ghi nhớ:</strong> Đã thay 1 thẻ.
+                            Ghi nhớ <em>cho phiên này</em>: ưu tiên bám sát nguồn cho chủ đề Trust calibration.
+                            <strong>KHÔNG</strong> lưu nội dung bài học của bạn sau khi đóng trang. <span
+                                class="muted">(System nói rõ điều gì được nhớ / không nhớ)</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="ensureData('agency'); nav('screen-results');">Tiếp tục
+                            hoàn thành bộ thẻ →</button>
+                        <button class="btn btn-secondary" onclick="recReset()">↺ Chạy lại kịch bản</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 05 — FEEDBACK MATRIX 2x2 ===== -->
+            <div id="screen-matrix" class="screen">
+                <h2>05 — Feedback hai chiều (ma trận 2×2)</h2>
+                <p>Đủ 4 loại tín hiệu, mỗi ô có nơi xuất hiện thật trong prototype + rationale.</p>
+                <div class="matrix">
+                    <div class="mh"></div>
+                    <div class="mh">Explicit — Tường minh</div>
+                    <div class="mh">Implicit — Ngầm định</div>
+
+                    <div class="mside">User → System</div>
+                    <div>
+                        <strong>Có trong UI:</strong> nút "Báo sai" + chọn loại lỗi (04); sửa nội dung thẻ; "Loại bỏ";
+                        modal phản hồi cuối phiên.<br>
+                        <em>Mục tiêu:</em> dạy hệ thống biết thẻ nào sai/hữu ích.
+                    </div>
+                    <div>
+                        <strong>Tín hiệu (đánh dấu trong flow):</strong> lật thẻ rồi bỏ qua &lt;2s; sửa 1 thẻ rất nhiều
+                        lần; bấm Hoàn tác.<br>
+                        <em>Diễn giải dự kiến:</em> chỉ dùng để xếp lịch ôn / xếp hạng thẻ — <strong>không</strong> coi
+                        là nhãn đúng-sai chuẩn.
+                    </div>
+
+                    <div class="mside">System → User</div>
+                    <div>
+                        <strong>Có trong UI:</strong> banner "Đã tạo N thẻ, 2 cần kiểm tra vì nguồn không rõ" + bước
+                        tiếp theo; thông báo "đã sửa &amp; ghi nhớ gì" (04).<br>
+                        <em>Mục tiêu:</em> cho người dùng biết AI đang làm gì &amp; giới hạn.
+                    </div>
+                    <div>
+                        <strong>Cue giao diện:</strong> viền màu theo độ tin cậy; thẻ thấp xếp cuối &amp; chưa chọn sẵn;
+                        badge 🟦/🟨; <code>BẢN NHÁP</code> cho tới khi duyệt.<br>
+                        <em>Truyền đạt:</em> mức độ đáng tin mà không cần đọc chữ.
+                    </div>
+                </div>
+
+                <div class="rationale mt-4">
+                    <strong>Rationale đầy đủ (8 câu · áp cho mọi ô):</strong>
+                    <ul>
+                        <li><strong>Khi nào:</strong> tại điểm dừng tự nhiên (sau khi xem thẻ / cuối phiên), không ngắt
+                            liên tục.</li>
+                        <li><strong>Giúp đạt mục tiêu gì:</strong> cải thiện độ chính xác bộ thẻ &amp; lịch ôn của chính
+                            người dùng.</li>
+                        <li><strong>Vì sao explicit/implicit:</strong> lỗi nội dung cần explicit (rõ ràng, có loại lỗi);
+                            mức nắm bài hợp với implicit (ít ma sát).</li>
+                        <li><strong>Tín hiệu đa nghĩa:</strong> "bỏ qua nhanh" = đã thuộc hoặc chán → không kết luận
+                            cứng.</li>
+                        <li><strong>Phản ứng ngay:</strong> báo sai → xác nhận hiểu + đề xuất sửa ngay (04).</li>
+                        <li><strong>Dùng về sau:</strong> tổng hợp ẩn danh để cải thiện chất lượng tạo thẻ;
+                            <em>không</em> bán/định danh.
+                        </li>
+                        <li><strong>Người dùng biết &amp; kiểm soát:</strong> có ghi chú "tín hiệu này dùng để xếp lịch
+                            ôn"; có thể tắt nhắc.</li>
+                        <li><strong>Không gián đoạn quá mức:</strong> implicit chạy ngầm; explicit chỉ hỏi ở điểm dừng.
+                        </li>
+                    </ul>
+                </div>
+                <div class="flex gap-2 wrap">
+                    <button class="btn btn-secondary" onclick="nav('screen-recovery')">Xem explicit user feedback
+                        (04)</button>
+                    <button class="btn btn-secondary" onclick="ensureData('agency'); nav('screen-results')">Xem implicit
+                        system cue (03)</button>
+                </div>
+            </div>
+
+            <!-- ===== 06 — DESIGN RATIONALE ===== -->
+            <div id="screen-rationale" class="screen">
+                <h2>06 — Design rationale</h2>
+                <p>Lập luận bằng <strong>rủi ro &amp; khả năng khôi phục</strong>, không phải "thấy hợp lý". Mỗi flow
+                    chính còn có thẻ rationale đặt ngay cạnh nó.</p>
+
+                <div class="card">
+                    <h3>Tạo &amp; review thẻ (F2)</h3>
+                    <ul style="margin-left:1.1rem; color:var(--text-muted)">
+                        <li><strong>AI biết:</strong> nội dung đoạn bài học được dán.</li>
+                        <li><strong>AI chưa biết:</strong> bạn cần ôn phần nào, mức độ của bạn.</li>
+                        <li><strong>Giả định:</strong> đoạn văn đủ chính xác để trích thẻ.</li>
+                        <li><strong>Có thể sai:</strong> diễn giải sai khái niệm, hoặc bịa nội dung không có trong bài.
+                        </li>
+                        <li><strong>Hậu quả &amp; ai chịu:</strong> người học ghi nhớ sai → ảnh hưởng kết quả thi.</li>
+                        <li><strong>Dễ phát hiện/hoàn tác?</strong> Có — nhờ lớp Nguồn + tách dữ kiện/suy luận + nút
+                            Hoàn tác.</li>
+                        <li><strong>Act/Ask/Don't:</strong> <code>Act</code> với gộp thẻ trùng (rủi ro thấp, undo dễ).
+                        </li>
+                        <li><strong>Người dùng kiểm soát ở đâu:</strong> giữ/loại/sửa từng thẻ.</li>
+                        <li><strong>Feedback:</strong> báo sai + chọn loại lỗi; tín hiệu sửa nhiều lần.</li>
+                        <li><strong>Giúp hoàn thành mục tiêu:</strong> bộ thẻ đúng → ôn tập hiệu quả.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>Agency khi lưu &amp; nhắc (F3)</h3>
+                    <p style="margin-bottom:0.5rem"><em>"Gộp thẻ trùng có rủi ro thấp, người dùng thấy ngay &amp; có nút
+                            Hoàn tác, vì vậy AI được tự thực hiện (Act)."</em></p>
+                    <p style="margin-bottom:0.5rem"><em>"Thêm thẻ vào bộ ôn thi đang có &amp; bật nhắc tác động đáng kể,
+                            vì vậy AI xin xác nhận trước (Ask)."</em></p>
+                    <p style="margin-bottom:0"><em>"Xóa thẻ đã sửa / đánh dấu đã thuộc / chia sẻ là khó hoàn tác hoặc
+                            vượt thẩm quyền, vì vậy AI không tự làm (Don't Act)."</em></p>
+                </div>
+
+                <div class="card">
+                    <h3>Failure &amp; Recovery (F4)</h3>
+                    <ul style="margin-left:1.1rem; color:var(--text-muted)">
+                        <li><strong>Rủi ro cao + khó tự phát hiện</strong> (giọng tự tin) → bắt buộc lớp bằng chứng.
+                        </li>
+                        <li>Recovery không dừng ở "báo lỗi": hệ thống xác nhận đã hiểu → đề xuất sửa → nói rõ điều gì
+                            được nhớ/không nhớ.</li>
+                        <li>Feedback yêu cầu <strong>loại lỗi</strong>, không chỉ nút thích/không thích.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- ===== 07 — DEMO PATH ===== -->
+            <div id="screen-demo" class="screen">
+                <h2>07 — Demo path (5 phút)</h2>
+                <p>Bấm theo đúng thứ tự để đi qua mọi nhánh được chấm.</p>
+                <div class="card">
+                    <ol style="margin-left:1.2rem; line-height:2;">
+                        <li><strong>0:00–0:30</strong> — Mở <strong>00 Flow map</strong>: nêu người dùng, lát cắt, phạm
+                            vi.</li>
+                        <li><strong>0:30–1:15</strong> — <strong>01 Onboarding</strong>: AI làm gì / không làm gì / dữ
+                            liệu &amp; quyền → "Bắt đầu".</li>
+                        <li><strong>1:15–2:15</strong> — <strong>02</strong> chọn chip "Bài dài · cả chương" → AI
+                            <code>Ask</code> tập trung phần nào (F1) → tạo thẻ. Tại <strong>03</strong> (Trust): bấm
+                            "Nguồn", xem badge 🟦/🟨; xem toast <code>Act</code> gộp thẻ trùng + thử
+                            <code>Ask</code>/<code>Don't Act</code>.
+                        </li>
+                        <li><strong>2:15–3:45</strong> — <strong>04 Recovery</strong>: "Đối chiếu nguồn" → "Báo sai" →
+                            chọn loại lỗi → hệ thống xác nhận → "Tạo lại" → xem điều được ghi nhớ. Rồi quay 02 chọn
+                            "Agency Design" để xem <strong>F5</strong> thẻ tin cậy thấp + "Tạo lại".</li>
+                        <li><strong>3:45–4:45</strong> — <strong>05 Feedback 2×2</strong>: chỉ ra đủ 4 ô + rationale.
+                        </li>
+                        <li><strong>4:45–5:00</strong> — <strong>06 Rationale</strong>: quyết định quan trọng nhất (lớp
+                            bằng chứng chống over-trust) &amp; rủi ro còn lại.</li>
+                    </ol>
+                </div>
+                <button class="btn btn-primary" onclick="nav('screen-flowmap')">Bắt đầu demo từ 00 →</button>
+            </div>
+
+            <!-- ===== EMPTY ===== -->
+            <div id="screen-empty" class="screen">
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <h2>Chưa có flashcard nào</h2>
+                    <p>Bạn đã loại bỏ tất cả bản nháp.</p>
+                    <button class="btn btn-primary mt-4" onclick="nav('screen-input')">Quay lại nhập bài học</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== Feedback Modal (end of session) ===== -->
+    <div class="modal-overlay" id="feedback-modal">
+        <div class="modal-content">
+            <h3 id="feedback-title">Phiên ôn tập thế nào?</h3>
+            <p id="feedback-sub">Phản hồi tường minh của bạn giúp cải thiện bộ flashcard (explicit user → system).</p>
+            <div id="feedback-form">
+                <label class="flex gap-2 items-center mb-4"
+                    style="padding:0.5rem; border:1px solid var(--border); border-radius:0.5rem; cursor:pointer;"><input
+                        type="radio" name="fb_quality" value="good"> Bộ thẻ hữu ích</label>
+                <label class="flex gap-2 items-center mb-4"
+                    style="padding:0.5rem; border:1px solid var(--border); border-radius:0.5rem; cursor:pointer;"><input
+                        type="radio" name="fb_quality" value="bad"> Có thẻ sai / gây hiểu nhầm</label>
+                <label class="flex gap-2 items-center mb-4"
+                    style="padding:0.5rem; border:1px solid var(--border); border-radius:0.5rem; cursor:pointer;"><input
+                        type="radio" name="fb_quality" value="hard"> Quá khó</label>
+                <textarea placeholder="Góp ý thêm (không bắt buộc)..." style="height:80px;"
+                    id="feedback-text"></textarea>
+                <div class="muted mt-2">Tín hiệu này dùng để cải thiện chất lượng tạo thẻ. Bạn có thể bỏ qua.</div>
+                <div class="flex justify-between mt-4">
+                    <button class="btn btn-secondary" onclick="closeFeedback()">Bỏ qua</button>
+                    <button class="btn btn-primary" onclick="submitFeedback()">Gửi phản hồi</button>
+                </div>
+            </div>
+            <div id="feedback-success" class="hidden text-center">
+                <div style="font-size:3rem;">✅</div>
+                <h3 style="color:var(--success);">Cảm ơn!</h3>
+                <p>Phản hồi của bạn sẽ giúp cải thiện bộ flashcard.</p>
+                <button class="btn btn-secondary mt-4" onclick="closeFeedbackAndContinue()">Tiếp tục</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Ask Modal (Agency: Ask) ===== -->
+    <div class="modal-overlay" id="ask-modal">
+        <div class="modal-content">
+            <h3>🟡 AI xin xác nhận trước khi hành động</h3>
+            <p>Mình muốn <strong>lưu <span id="ask-count">0</span> thẻ</strong> vào bộ <strong>"Ôn cuối kỳ"</strong>
+                đang có. Đây là thao tác có tác động nên mình hỏi trước.</p>
+            <label class="flex gap-2 items-center mb-4"
+                style="padding:0.6rem; border:1px solid var(--border); border-radius:0.5rem; cursor:pointer;">
+                <input type="checkbox" id="ask-reminder"> Đồng thời bật nhắc ôn mỗi tối 20:00
+            </label>
+            <div class="flex justify-between gap-2 wrap">
+                <button class="btn btn-secondary" onclick="closeAsk()">Huỷ</button>
+                <button class="btn btn-primary" onclick="confirmSave()">Đồng ý &amp; lưu</button>
+            </div>
+            <div class="muted mt-2">Don't Act: AI sẽ không bật nhắc nếu bạn không tick — không tự quyết thay bạn.</div>
+        </div>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div id="toast"><span id="toast-msg"></span><button id="toast-undo" class="hidden" onclick="undoAct()">Hoàn
+            tác</button></div>
+
+    <script>
+        // ===== State =====
+        let currentTopic = '';
+        let generatedCards = [];
+        let studyCards = [];
+        let currentStudyIndex = 0;
+        let cardsViewedThisSession = 0;
+        let isFlipped = false;
+        let lastMerged = null; // for Act undo
+
+        // ===== Mock data theo nội dung Human-Centered AI Design =====
+        const mockLessons = {
+            trust: `Trust calibration không phải là mục tiêu tạo ra niềm tin cao nhất, mà là niềm tin đúng mức (Calibrated trust) [1, 2]. 
+Nếu người dùng tin quá mức (Overtrust), họ dễ giao việc quá mức và bỏ qua kiểm tra; nếu thiếu tin tưởng (Distrust), họ sẽ không tận dụng hết giá trị của AI [1, 3].
+Để hiệu chỉnh niềm tin, cần tập trung vào 3 yếu tố: Expectation (nói rõ AI làm được gì), Explainability (giải thích lý do AI ra kết quả) và Control (cho người dùng quyền duyệt/sửa) [3]. 
+Đặc biệt, AI Agent nên cân bằng giữa Warmth (thân thiện) để giữ chân người dùng và Competence (năng lực) khớp với thực tế để giữ trust bền vững [4, 5].`,
+            agency: `Mức độ tự chủ (Agency) của AI nên được thiết kế dựa trên công thức: Độ chắc chắn x Chi phí khi sai (Cost-of-error) [6].
+Với các sai sót "ĐẮT" (như xóa dữ liệu, chuyển tiền), hệ thống nên KHÔNG LÀM hoặc HỎI (Ask) rất kỹ [6]. 
+Với các sai sót "RẺ" (như gợi ý từ, autocomplete), hệ thống có thể TỰ LÀM (Act) để tiết kiệm thời gian vì người dùng dễ dàng hoàn tác (Undo) [6].
+Sử dụng Augmentation khi cần sự phán đoán của con người và Automation cho các việc lặp lại, ít giá trị sáng tạo [7].`
+        };
+
+        const mockCardsTrust = [
+            {
+                q: "Trust calibration là gì?",
+                a: "Là việc hiệu chỉnh niềm tin của người dùng khớp với năng lực thực tế của AI để tránh Overtrust hoặc Distrust [1].",
+                conf: "high", type: "fact", tag: "Niềm tin",
+                source: "Trust tốt không phải trust cao, mà là trust đúng mức [2]."
+            },
+            {
+                q: "Tại sao không nên hứa hẹn quá khả năng của AI?",
+                a: "Vì kỳ vọng vượt quá thực tế sẽ dẫn đến thất vọng và mất niềm tin dài hạn (Don't let your UI write a check that your AI can't cash) [4, 5].",
+                conf: "high", type: "fact", tag: "Kỳ vọng",
+                source: "Đừng signal competence cao hơn năng lực thật của agent [5]."
+            },
+            {
+                q: "Yếu tố Warmth (thân thiện) có tác dụng gì trong thiết kế Agent?",
+                a: "Người dùng sẵn sàng tương tác lâu hơn với những Agent mang lại cảm giác dễ gần và thiện chí [4].",
+                conf: "high", type: "fact", tag: "Cá tính AI",
+                source: "User sẵn sàng tương tác lâu hơn với agent mang lại cảm giác thân thiện [4]."
+            },
+            {
+                q: "Làm thế nào để tăng tính Explainability (khả năng giải thích) cho AI?",
+                a: "Chỉ ra hành vi cũ của user ảnh hưởng đến kết quả, hoặc giải thích các yếu tố đầu vào (input) nào tác động mạnh đến đầu ra [8, 9].",
+                conf: "medium", type: "inference", tag: "Minh bạch",
+                source: "Giải thích vì sao hệ thống làm như vậy... Map system input attributes to system outputs [8, 9]."
+            },
+            {
+                q: "Explainability quan trọng nhất khi nào?",
+                a: "Khi kết quả của AI ảnh hưởng trực tiếp đến quyết định của người dùng hoặc khi kết quả có vẻ khó hiểu [8].",
+                conf: "high", type: "fact", tag: "Minh bạch",
+                source: "Người dùng cần hiểu tại sao khi kết quả ảnh hưởng đến quyết định [8]."
+            },
+            {
+                q: "Calibrated trust nghĩa là gì?",
+                a: "Là niềm tin đúng mức, khớp với năng lực thật của AI — không quá tin (Overtrust) cũng không thiếu tin (Distrust) [2].",
+                conf: "high", type: "fact", tag: "Niềm tin",
+                source: "Trust tốt không phải trust cao, mà là trust đúng mức [2].",
+                dup: true
+            }
+        ];
+
+        const mockCardsAgency = [
+            {
+                q: "Khi nào hệ thống nên sử dụng chiến lược 'Ask' (Hỏi trước khi làm)?",
+                a: "Khi AI có tín hiệu đúng nhưng còn mơ hồ, hoặc khi hành động đó quan trọng và cần giảm rủi ro lớn [10].",
+                conf: "high", type: "fact", tag: "Tự chủ",
+                source: "Ask: Có tín hiệu đúng nhưng còn mơ hồ. Một câu hỏi ngắn giảm rủi ro lớn [10]."
+            },
+            {
+                q: "Chi phí khi sai (Cost-of-error) ảnh hưởng thế nào đến Agency?",
+                a: "Sai mà ĐẮT thì vùng 'Tự làm' co lại (phải rất chắc mới làm); sai mà RẺ thì vùng 'Tự làm' nở ra (cứ làm rồi cho user undo) [6].",
+                conf: "high", type: "fact", tag: "Thiết kế lỗi",
+                source: "Agency = độ-chắc x cost-of-error, không phải slider cố định [6]."
+            },
+            {
+                q: "Màn hình lỗi nên được tận dụng để làm gì?",
+                a: "(AI chưa chắc) Có thể chỉ là nơi báo lỗi cho người dùng biết.",
+                conf: "low", type: "inference", tag: "Xử lý lỗi",
+                source: "(Không trích đủ rõ trong bài — cần kiểm tra lại)"
+            },
+            {
+                q: "Phân biệt Explicit và Implicit User Feedback?",
+                a: "Explicit là user chủ động đánh giá (like/tim); Implicit là hệ thống tự thu thập qua hành vi (thời gian xem/tốc độ lướt) [11, 12].",
+                conf: "high", type: "fact", tag: "Phản hồi",
+                source: "User chủ động cung cấp (Explicit) vs Hệ thống thu thập qua hành vi tự nhiên (Implicit) [11, 12]."
+            }
+        ];
+
+        // ===== Navigation =====
+        function nav(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const el = document.getElementById(screenId);
+            if (el) el.classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === screenId));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        document.querySelectorAll('.nav-item').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const t = btn.dataset.target;
+                if ((t === 'screen-results' || t === 'screen-study') && generatedCards.length === 0) ensureData('trust');
+                nav(t);
+            });
+        });
+        // keep navTo alias for safety
+        function navTo(id) { nav(id); }
+
+        // Seed data when grader jumps straight to a screen needing it
+        function ensureData(topic) {
+            currentTopic = topic || 'trust';
+            renderDrafts(true);
+        }
+
+        // ===== Input =====
+        const textarea = document.getElementById('lesson-text');
+        const charCount = document.getElementById('char-count');
+        textarea.addEventListener('input', () => {
+            charCount.innerText = textarea.value.length;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+            currentTopic = 'custom';
+        });
+
+        function selectMock(topic) {
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+            if (window.event && window.event.target) window.event.target.classList.add('selected');
+            currentTopic = topic;
+            if (topic === 'long') textarea.value = mockLessons.trust + "\n\n" + mockLessons.agency; // simulate long chapter
+            else textarea.value = mockLessons[topic] || "";
+            charCount.innerText = textarea.value.length;
+            document.getElementById('input-error').classList.add('hidden');
+            document.getElementById('input-warning').classList.add('hidden');
+        }
+
+        function loadMockLesson() {
+            nav('screen-input');
+            const chips = document.querySelectorAll('.chip');
+            if (chips.length) chips[0].click();
+        }
+
+        // ===== Generate =====
+        function generateFlashcards() {
+            const text = textarea.value.trim();
+            const errEl = document.getElementById('input-error');
+            const warnEl = document.getElementById('input-warning');
+            errEl.classList.add('hidden'); warnEl.classList.add('hidden');
+            if (text.length === 0) { errEl.classList.remove('hidden'); return; }
+            if (text.length < 50 && currentTopic === 'custom') { warnEl.classList.remove('hidden'); }
+
+            // F1: ambiguous / too long -> AI asks first (Ask)
+            if (currentTopic === 'long') { nav('screen-clarify'); return; }
+            runGenerate();
+        }
+
+        function clarifyPick(focus) {
+            showToast('AI sẽ tập trung: ' + focus, false);
+            currentTopic = 'trust';
+            runGenerate();
+        }
+
+        function runGenerate() {
+            nav('screen-loading');
+            const stepEl = document.getElementById('loading-step');
+            setTimeout(() => stepEl.innerText = "Đang xác định khái niệm chính...", 500);
+            setTimeout(() => stepEl.innerText = "Đang chuyển thành câu hỏi active recall...", 1000);
+            setTimeout(() => stepEl.innerText = "Đang gắn độ tin cậy & trích nguồn...", 1500);
+            setTimeout(() => renderDrafts(), 1900);
+        }
+
+        function renderDrafts(silent) {
+            if (currentTopic === 'agency') {
+                generatedCards = JSON.parse(JSON.stringify(mockCardsAgency));
+                document.getElementById('low-confidence-banner').classList.remove('hidden');
+                document.getElementById('compare-before').innerText = mockLessons.agency;
+                document.getElementById('compare-after').innerHTML = "<strong>Q: Khi nào hệ thống nên dùng 'Ask'?</strong><br>A: Khi tín hiệu đúng nhưng mơ hồ, hoặc hành động quan trọng cần giảm rủi ro.<br><br><strong>Q: Cost-of-error ảnh hưởng Agency thế nào?</strong><br>A: Sai đắt → co vùng 'Tự làm'; sai rẻ → nở vùng 'Tự làm'.";
+            } else {
+                generatedCards = JSON.parse(JSON.stringify(mockCardsTrust));
+                document.getElementById('low-confidence-banner').classList.add('hidden');
+                document.getElementById('compare-before').innerText = mockLessons.trust;
+                document.getElementById('compare-after').innerHTML = "<strong>Q: Trust calibration là gì?</strong><br>A: Hiệu chỉnh niềm tin khớp với năng lực thật của AI (tránh Overtrust/Distrust).<br><br><strong>Q: Vì sao không nên hứa quá khả năng AI?</strong><br>A: Kỳ vọng vượt thực tế → thất vọng & mất niềm tin dài hạn.";
+            }
+            generatedCards.forEach(c => c.status = 'pending');
+            // F5: low-confidence cards sorted last + not pre-selected (implicit system feedback)
+            generatedCards.sort((a, b) => (a.conf === 'low' ? 1 : 0) - (b.conf === 'low' ? 1 : 0));
+
+            updateStats();
+            drawDraftList();
+            if (!silent) nav('screen-results');
+            // Act: auto-merge duplicates shortly after showing
+            setTimeout(autoMergeDuplicates, 600);
+        }
+
+        function getConfBadge(conf) {
+            if (conf === 'high') return '<span class="confidence-badge confidence-high">Tin cậy: Cao</span>';
+            if (conf === 'medium') return '<span class="confidence-badge confidence-medium">Tin cậy: TB</span>';
+            return '<span class="confidence-badge confidence-low">Tin cậy: Thấp ⚠️</span>';
+        }
+        function getTypeBadge(type) {
+            return type === 'fact'
+                ? '<span class="type-badge type-fact">🟦 Dữ kiện từ bài</span>'
+                : '<span class="type-badge type-infer">🟨 AI diễn giải</span>';
+        }
+
+        function drawDraftList() {
+            const container = document.getElementById('draft-container');
+            container.innerHTML = '';
+            generatedCards.forEach((card, index) => {
+                const div = document.createElement('div');
+                div.className = `card draft-card ${card.status === 'removed' ? 'removed' : ''} ${card.status === 'kept' ? 'kept' : ''} ${card.conf === 'low' && card.status === 'pending' ? 'low-confidence' : ''}`;
+                let statusBadge = '';
+                if (card.status === 'kept') statusBadge = '<span style="color:var(--success); font-weight:bold; margin-left:10px;">✓ Đã giữ lại</span>';
+                else if (card.status === 'removed') statusBadge = '<span style="color:var(--error); font-weight:bold; margin-left:10px;">✕ Đã loại bỏ</span>';
+                else statusBadge = '<span class="draft-badge" style="margin-left:10px;">NHÁP · chưa duyệt</span>';
+                const lowMsg = card.conf === 'low' ? `<div style="color:#92400E; font-size:0.85rem; margin-bottom:0.5rem;"><strong>AI không chắc phần này.</strong> Hãy kiểm tra trước khi học.</div>` : '';
+                div.innerHTML = `
+                ${getConfBadge(card.conf)}
+                ${lowMsg}
+                <div class="mb-4">${getTypeBadge(card.type)} <span style="font-size:0.72rem; background:#E5E7EB; padding:2px 6px; border-radius:4px;">#${card.tag}</span>${statusBadge}</div>
+                <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                    <div><strong style="color:var(--primary);">Hỏi:</strong>
+                        <input type="text" value="${card.q.replace(/"/g, '&quot;')}" style="width:100%; border:1px solid transparent; padding:4px; font-weight:bold; border-radius:4px;" onfocus="this.style.borderColor='var(--primary)';this.style.background='white'" onblur="this.style.borderColor='transparent';this.style.background='transparent';updateCardData(${index},'q',this.value)" ${card.status === 'removed' ? 'disabled' : ''}></div>
+                    <div><strong style="color:var(--secondary);">Đáp:</strong>
+                        <textarea style="width:100%; border:1px solid transparent; padding:4px; height:56px; font-family:inherit; border-radius:4px;" onfocus="this.style.borderColor='var(--primary)';this.style.background='white'" onblur="this.style.borderColor='transparent';this.style.background='transparent';updateCardData(${index},'a',this.value)" ${card.status === 'removed' ? 'disabled' : ''}>${card.a}</textarea></div>
+                </div>
+                <div class="source-snippet"><strong>Nguồn (bằng chứng):</strong> "${card.source}"</div>
+                <div class="card-actions">
+                    ${card.status !== 'kept' ? `<button class="btn btn-sm btn-success" onclick="markCard(${index},'kept')">Giữ lại</button>` : ''}
+                    ${card.status !== 'removed' ? `<button class="btn btn-sm btn-danger" onclick="markCard(${index},'removed')">Loại bỏ</button>` : ''}
+                    ${card.status !== 'pending' ? `<button class="btn btn-sm btn-secondary" onclick="markCard(${index},'pending')">Hoàn tác</button>` : ''}
+                </div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function updateCardData(i, field, val) { generatedCards[i][field] = val; }
+        function markCard(i, status) { generatedCards[i].status = status; updateStats(); drawDraftList(); }
+
+        function updateStats() {
+            const total = generatedCards.length;
+            const kept = generatedCards.filter(c => c.status === 'kept').length;
+            const removed = generatedCards.filter(c => c.status === 'removed').length;
+            document.getElementById('stats-total').innerText = total;
+            document.getElementById('stats-kept').innerText = kept;
+            document.getElementById('stats-pending').innerText = total - kept - removed;
+            document.getElementById('stats-removed').innerText = removed;
+            const btn = document.getElementById('btn-start-study');
+            if (kept > 0) { btn.disabled = false; btn.innerText = `Xác nhận & lưu (${kept} thẻ)`; }
+            else { btn.disabled = true; btn.innerText = "Cần giữ lại ít nhất 1 thẻ"; }
+        }
+
+        // ===== Agency: ACT (auto-merge duplicates) =====
+        function autoMergeDuplicates() {
+            const dupIndex = generatedCards.findIndex(c => c.dup && c.status !== 'removed');
+            if (dupIndex === -1) return;
+            lastMerged = generatedCards[dupIndex];
+            generatedCards.splice(dupIndex, 1);
+            updateStats(); drawDraftList();
+            showToast('🟢 Act: AI đã tự gộp 2 thẻ trùng nội dung.', true);
+        }
+        function demoAct() {
+            if (lastMerged) { showToast('🟢 Act đã chạy: 1 thẻ trùng được gộp (xem nút Hoàn tác).', true); }
+            else { autoMergeDuplicates(); if (!lastMerged) showToast('Không còn thẻ trùng để gộp.', false); }
+        }
+        function undoAct() {
+            if (!lastMerged) return;
+            generatedCards.push(lastMerged); lastMerged = null;
+            updateStats(); drawDraftList(); hideToast();
+            showToast('↺ Đã hoàn tác — thẻ trùng được khôi phục.', false);
+        }
+
+        // ===== Agency: ASK (confirm before saving to deck + reminder) =====
+        function askSaveDeck() {
+            const kept = generatedCards.filter(c => c.status === 'kept').length;
+            if (kept === 0) { showToast('Hãy giữ lại ít nhất 1 thẻ trước.', false); scrollToDrafts(); return; }
+            document.getElementById('ask-count').innerText = kept;
+            document.getElementById('ask-reminder').checked = false;
+            document.getElementById('ask-modal').classList.add('active');
+        }
+        function closeAsk() { document.getElementById('ask-modal').classList.remove('active'); }
+        function confirmSave() {
+            const reminder = document.getElementById('ask-reminder').checked;
+            closeAsk();
+            showToast(reminder ? '✅ Đã lưu vào "Ôn cuối kỳ" + bật nhắc 20:00.' : '✅ Đã lưu vào "Ôn cuối kỳ". (Không bật nhắc.)', false);
+            startStudyMode();
+        }
+
+        // ===== Agency: DON'T ACT =====
+        function demoDontAct() {
+            showToast("🔴 Don't Act: AI không tự xóa thẻ bạn đã sửa — rủi ro cao & vượt thẩm quyền. Bạn tự quyết.", false);
+        }
+
+        function scrollToDrafts() {
+            nav('screen-results');
+            setTimeout(() => document.getElementById('draft-container').scrollIntoView({ behavior: 'smooth' }), 100);
+        }
+
+        function regenerateCards() {
+            nav('screen-loading');
+            document.getElementById('loading-step').innerText = "Đang xử lý lại với ngữ cảnh mở rộng...";
+            setTimeout(() => {
+                const low = generatedCards.find(c => c.conf === 'low');
+                if (low) { low.conf = 'medium'; low.type = 'fact'; low.a = "Màn hình lỗi nên: (1) giải thích cách hệ thống vận hành, (2) hướng dẫn cách dùng đúng, (3) xin feedback từ người dùng [11]."; low.source = "Màn hình lỗi là cơ hội để hướng dẫn cách dùng đúng. Lỗi là cơ hội để xin feedback [11]."; low.status = 'pending'; }
+                document.getElementById('low-confidence-banner').classList.add('hidden');
+                updateStats(); drawDraftList(); nav('screen-results');
+                showToast('Đã tạo lại thẻ độ tin cậy thấp — nhớ kiểm tra nguồn.', false);
+            }, 1400);
+        }
+
+        // ===== Study =====
+        function startStudyMode() {
+            studyCards = generatedCards.filter(c => c.status === 'kept');
+            if (studyCards.length === 0) { nav('screen-empty'); return; }
+            currentStudyIndex = 0; cardsViewedThisSession = 0;
+            showStudyCard(); nav('screen-study');
+        }
+        function showStudyCard() {
+            if (currentStudyIndex >= studyCards.length) { triggerFeedbackModal(); return; }
+            const card = studyCards[currentStudyIndex];
+            document.getElementById('study-q').innerText = card.q;
+            document.getElementById('study-a').innerText = card.a;
+            document.getElementById('study-progress').innerText = `Thẻ ${currentStudyIndex + 1}/${studyCards.length}`;
+            document.getElementById('flashcard-element').classList.remove('is-flipped');
+            isFlipped = false;
+            document.getElementById('study-actions').classList.remove('visible');
+        }
+        function flipCard() {
+            if (isFlipped) return;
+            document.getElementById('flashcard-element').classList.add('is-flipped');
+            isFlipped = true;
+            setTimeout(() => document.getElementById('study-actions').classList.add('visible'), 300);
+        }
+        function nextCard() {
+            currentStudyIndex++; cardsViewedThisSession++;
+            if (currentStudyIndex >= studyCards.length) triggerFeedbackModal();
+            else showStudyCard();
+        }
+
+        // ===== Feedback modal =====
+        function triggerFeedbackModal() {
+            document.getElementById('feedback-form').classList.remove('hidden');
+            document.getElementById('feedback-title').classList.remove('hidden');
+            document.getElementById('feedback-sub').classList.remove('hidden');
+            document.getElementById('feedback-success').classList.add('hidden');
+            document.getElementById('feedback-text').value = '';
+            document.getElementsByName('fb_quality').forEach(r => r.checked = false);
+            document.getElementById('feedback-modal').classList.add('active');
+        }
+        function closeFeedback() {
+            document.getElementById('feedback-modal').classList.remove('active');
+            if (currentStudyIndex >= studyCards.length) nav('screen-results');
+            else showStudyCard();
+        }
+        function submitFeedback() {
+            document.getElementById('feedback-form').classList.add('hidden');
+            document.getElementById('feedback-title').classList.add('hidden');
+            document.getElementById('feedback-sub').classList.add('hidden');
+            document.getElementById('feedback-success').classList.remove('hidden');
+        }
+        function closeFeedbackAndContinue() { closeFeedback(); }
+
+        // ===== Recovery loop (F4) =====
+        function recRevealSource() {
+            document.getElementById('rec-source').classList.remove('hidden');
+            document.getElementById('rec-report').classList.remove('hidden');
+        }
+        function recReport() {
+            document.getElementById('rec-report-form').classList.remove('hidden');
+            setStep('rec-1', 'done'); setStep('rec-2', 'current');
+        }
+        function recSubmitReason() {
+            const sel = document.querySelector('input[name="rec_reason"]:checked');
+            const map = { notinsource: "thẻ này nêu thông tin KHÔNG có trong bài học (AI tự suy luận)", factual: "thẻ này sai về mặt sự thật", offtopic: "thẻ này lạc đề so với bài học" };
+            const reason = sel ? map[sel.value] : map.notinsource;
+            document.getElementById('rec-understand-text').innerText = reason;
+            document.getElementById('rec-understand').classList.remove('hidden');
+            document.getElementById('rec-options').classList.remove('hidden');
+            setStep('rec-2', 'done'); setStep('rec-3', 'done'); setStep('rec-4', 'current');
+        }
+        function recFix(kind) {
+            document.getElementById('rec-fixed').classList.remove('hidden');
+            setStep('rec-4', 'done'); setStep('rec-5', 'current');
+            const msg = kind === 'delete' ? 'Đã xóa thẻ sai.' : (kind === 'edit' ? 'Mở chế độ tự sửa — bạn giữ toàn quyền.' : 'Đã tạo lại thẻ chỉ dựa trên câu có thật trong bài.');
+            showToast('✅ ' + msg, false);
+            document.getElementById('rec-fixed').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        function setStep(id, state) {
+            const el = document.getElementById(id);
+            el.classList.remove('locked', 'current', 'done');
+            el.classList.add(state);
+        }
+        function recReset() {
+            ['rec-source', 'rec-report', 'rec-report-form', 'rec-understand', 'rec-options', 'rec-fixed'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            setStep('rec-1', 'current');['rec-2', 'rec-3', 'rec-4', 'rec-5'].forEach(id => setStep(id, 'locked'));
+            document.querySelectorAll('input[name="rec_reason"]').forEach(r => r.checked = false);
+            nav('screen-recovery');
+        }
+
+        // ===== Toast =====
+        let toastTimer = null;
+        function showToast(msg, withUndo) {
+            document.getElementById('toast-msg').innerText = msg;
+            document.getElementById('toast-undo').classList.toggle('hidden', !withUndo);
+            const t = document.getElementById('toast'); t.classList.add('show');
+            clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, withUndo ? 6000 : 3000);
+        }
+        function hideToast() { document.getElementById('toast').classList.remove('show'); }
+    </script>
+</body>
+
+</html>
