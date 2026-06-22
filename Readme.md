@@ -4,7 +4,7 @@
 
 - **Track:** 1 · Biến thể AI Personal Assistant for Students
 - **Prototype:** [index.html](index.html) — mở trực tiếp bằng trình duyệt (HTML/CSS/JS thuần, không cần API).
-- **Link xem (deploy):** _<dán link GitHub Pages / Netlify đã cấp quyền xem vào đây>_
+
 
 ## Cách mở
 Mở `index.html` bằng Chrome/Edge, hoặc deploy GitHub Pages (Settings → Pages → branch `main`).
